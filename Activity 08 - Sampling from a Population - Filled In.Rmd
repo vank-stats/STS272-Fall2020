@@ -1,0 +1,109 @@
+---
+title: "Activity 08 - Sampling from a Population"
+author: "STS272 (Dr. VanKrevelen)"
+date: 'Updated: 9/13/2020'
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(moderndive)
+```
+
+Our focus for the upcoming sets of notes has to do with using a sample to make informed conclusions about a population. To be able to do this well, we need to have a good understanding of what happens when we randomly sample from a population.
+
+The `diamonds` dataset in the `ggplot2` package contains 53,940 diamonds. Let's pretend that this is our population and that we don't actually have access to the whole population. Instead, we will take a sample from the population to estimate the population mean diamond price.
+
+1. First as some review... what symbol do we use to represent a population mean?
+
+The Greek letter mu is used as the symbol for the population mean. It looks like this $\mu$.
+
+
+
+2. When we take random samples using R, it may be helpful for us to do so in a way that someone else can recreate our exact results. To do this, we set the "seed" where the randomization process will start. Replace the number inside the `set.seed()` function with a number of your choosing. Then use the `rep_sample_n()` function to take a random sample of 50 diamonds.
+
+```{r}
+set.seed(200914)
+diamonds_50 <- rep_sample_n(diamonds, size = 50)
+```
+
+3. Calculate your sample mean price and we will compare numbers across everyone in our class.
+
+```{r}
+mean(diamonds_50$price)
+```
+
+4. Now let's take a sample of 500 diamonds and calculate the sample mean of this new sample. Again we will compare numbers across the class. Run `set.seed()` at the top of this code too with a new seed chosen.
+
+```{r}
+set.seed(54321)
+diamonds_500 <- rep_sample_n(diamonds, size = 500)
+mean(diamonds_500$price)
+```
+
+5. What do you notice about the sample means we got with samples of 50 diamonds vs. with samples of 500 diamonds?
+
+With a sample of 500 diamonds, our sample means were all much closer together than when we took samples of 50 diamonds. This is because we have much more information with a sample of 500, so our "guess" (i.e. sample mean) should be much closer on average to the thing we're estimating (i.e. population mean).
+
+
+
+
+
+6. Our class only has 12 or so people. It'd be better if we could look at A LOT of random samples. We can do this with the `rep_sample_n()` function using the `rep = __` argument. Let's take 1,000 samples of 50 diamonds, calculate the sample mean for each one, and then make a histogram of our results. We can do this in multiple steps or we can use piping to do it all at once.
+
+```{r}
+set.seed(54321)
+diam_samps_50 <- rep_sample_n(diamonds, size = 50, reps = 1000) %>%
+  group_by(replicate) %>%
+  summarize(xbar = mean(price))
+ggplot(diam_samps_50) +
+  geom_histogram(aes(x = xbar), color = "white") +
+  geom_vline(xintercept = 3932.80, color = "red")
+```
+
+
+7. Let's do the same thing as above but with 1,000 samples of 500 diamonds.
+
+```{r}
+set.seed(54321)
+diam_samps_500 <- rep_sample_n(diamonds, size = 500, reps = 1000) %>%
+  group_by(replicate) %>%
+  summarize(xbar = mean(price))
+ggplot(diam_samps_500) +
+  geom_histogram(aes(x = xbar), color = "white") +
+  geom_vline(xintercept = 3932.80, color = "red")
+
+```
+
+
+8. What do you notice when you compare the two histograms? What is similar about them? What is different?
+
+Similarities: Both histograms are roughly bell-shaped (or normally distributed). Both are centered at roughly the same place (i.e. have the same mean).
+
+Differences: The samples of size 50 had more outliers than the samples of size 500. The range of sample means is much smaller when our sample size is 500 than when it is 50.
+
+
+
+9. Normally we don't know the population mean (that's why we estiamte it), but in this case I can calculate it. The population mean price is $3,932.80. Where does this show up in the two graphs you made?  How could we use this to talk about the **standard error** in the two graphs?
+
+The population mean is right in the center of both of our graphs..
+
+The standard error is the standard deviation from our sample means that we get over many,many random samples. So we could calculate the standard deviation of these sample means to understand how far we might typically be off by when we use a sample mean to estimate a population mean.
+
+```{r}
+sd(diam_samps_50$xbar)
+sd(diam_samps_500$xbar)
+```
+
+
+
+10. What do you think your answers to the previous two questions can tell you about random sampling and estimating parameters with statistics? We can explore this idea more with [this link](http://onlinestatbook.com/stat_sim/sampling_dist/).
+

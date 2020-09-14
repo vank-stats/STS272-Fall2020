@@ -1,0 +1,101 @@
+---
+title: "Activity 07 - An Introduction to RMarkdown"
+author: "STS272 (Dr. VanKrevelen)"
+date: 'Updated: 9/8/2020'
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This file is an R Markdown file (.RMD). Unlike a regular R script (.R), we can mix text, code, and ouput in the same file. This means that we can run code in the same place where we discuss our results. There are even ways to make it so that our text automatically changes when we change our code (e.g. a company who creates a monthly report may want this functionality).
+
+The process of creating the document that combines text, code, and output is called "Knitting." Try hitting the button above that says Knit. For now, let's choose "Knit to HTML".
+
+1. Where does the Knitted document show up?
+
+We get a pop up window that contains our new formatted document.
+
+
+2. R Markdown files also have ways for you to format some of your text. For example, what happens when I put words between *one* or **two** asterisks?
+
+Things between single asterisks are italicized.
+Things between double asterisks are bolded.
+
+
+3. Let's take a look at adding code to our document. Notice how the section below this question has a gray background. This is an R **code chunk**. We can type code in this section and R will run it sequentially as it knits our document. Write code to create a sequence of numbers and then to find the mean of those numbers. Then in the text section below the code, write what is displayed when you knit the document.
+
+```{r}
+x <- seq(1, 50, 3)
+mean(x)
+```
+
+The code is displayed in a box with a grayish background.
+The output is displayed in a box with a white backround (and ## at the start of a line).
+
+
+4. Let's use the code chunk below to load the `ggplot2` and `dplyr` libraries. Notice that we get some messages along with our code. We probably wouldn't want these in a formal document. At the top of the code chunk there is `{r}`. We can change some settings here to control what gets displayed / run. Try changing it to read `{r, message = FALSE}`. What happens when we do that?
+
+```{r, message = FALSE, warning = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+- `message = FALSE` got rid of the messages about the dplyr package using the same function names as other packages.
+- `warning = FALSE` gets rid of messages warning me that my version of R is old (some people may not have had these messages in the first place)
+
+
+5. Now let's try creating a graph. Use `ggplot()` to create a bar graph of `cut` in the `diamonds` data set. Add your code below then hit the little green triangle on the right side of the code chunk. What happens?
+
+```{r, eval = FALSE}
+ggplot(diamonds) +
+  geom_bar(aes(x = cut, fill = cut)) +
+  theme_dark()
+```
+
+The green arrow lets us run just that code chunk and displays output right below it. I may need to run the chunks above it first if I haven't loaded packages or if I need objects I previously created.
+
+
+6. We already saw how we could use `message = FALSE` to remove messages when we run a code chunk. Try `echo = FALSE` and write down what it does. Then replace that with `eval = FALSE` and write down what it does.
+
+- `echo = FALSE` will still display output but not the code from the chunk
+- `eval = FALSE` will show the code but won't run it so no output is produced
+
+
+7. Let's try an example to see how we might use R Markdown to generate reports that auto update. Let's say I have a datset that will be updated each year and I want to be able to generate new reports with minimal work on my part. 
+
+Outside of this document, install the `gapminder` package. The package contains a data frame called `gapminder` that includes data on countries around the world in 5 year increments from 1952 through 2007. Below is some code to generate the mean and median life expectancy for 2002. It creates an object called `reportyear` and another called `lifeExpSummary`.
+
+```{r, echo = FALSE}
+library(gapminder)
+reportyear <- 1997
+
+lifeExpSummary <- gapminder %>%
+  filter(year == reportyear) %>%
+  summarize(MeanLE = mean(lifeExp), MedLE = median(lifeExp)) %>%
+  round(digits = 1)
+```
+
+Now in my text, I can tell someone that for the year `r reportyear` the mean life expectancy was `r lifeExpSummary$MeanLE` and the median life expectancy was `r lifeExpSummary$MedLE`. 
+
+These numbers will change if you just change the value I assign to `reportyear` above. Try it out for 2002 and 2007. Knit the document after you make each change.
+
+I use the tick marks and start them with r (see above).
+
+
+8. What should I do if I wanted to display my analysis but not my code?
+
+I can use `echo = FALSE`
+
+
+9. It can be hard to memorize everything we can do with .RMD files. The [RMarkdown cheatsheet](https://rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf) can be a useful resource. For example, it helped me remember how to add a link to my document! Go to this link and pick a few of the features in Section 3 to experiment with below. Re-knit your document after to see if they worked!
+
+# What does a header 1 look like?
+## What about header 2?
+
+
+10. Lastly, if you have Microsoft Word, you can Knit to Word to create a Word document. This is what I have been doing for the notes and activities. Sometimes the formatting gets messed up a little, but you can then change it in Word if you need to. You can also Knit documents to pdf (what I prefer for a nice looking and easy to share file), but it requires you to have a separate program installed. See [here](https://yihui.org/tinytex/) for more info if you're interested.
