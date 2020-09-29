@@ -1,0 +1,126 @@
+---
+title: "Activity 12 - Working With Paired Data"
+author: "STS272 (Dr. VanKrevelen)"
+date: 'Updated: 9/27/2020'
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(ggplot2)
+library(infer)
+library(dplyr)
+```
+
+# Darwin example
+
+Today's activity will be about how to analyze and interpret data that is collected in pairs. 
+
+The example we'll look at is one from an experiment conducted by Charles Darwin. He wanted to look at the heights of cross-fertilized versus self-fertilized plants (measured in inches to the nearest 1/8th of an inch). To do this, he took 15 pots and potted one plant of each type in each pot. The plants were then measured after a certain period of time, and their heights were recorded. Below is code to read the data into R.
+
+```{r}
+darwin <- data.frame(pot = factor(1:15),
+                     cross = c(23.500, 12.000, 21.000, 22.000, 19.125,
+                               21.500, 22.125, 20.375, 18.250, 21.625,
+                               23.250, 21.000, 22.125, 23.000, 12.000),
+                     self = c(17.375, 20.375, 20.000, 20.000, 18.375,
+                              18.625, 18.625, 15.250, 16.500, 18.000,
+                              16.250, 18.000, 12.750, 15.500, 18.000))
+
+```
+
+1. What kinds of numerical and/or graphical summaries might we be interested in for this data? Include code for both below.
+
+```{r}
+summary(darwin)
+```
+
+<br>
+
+2. What do you notice? Did you make use of the `pot` variable at all?
+
+It looks like the cross fertilized plans tend to be taller (this is seen in Q1, Median, Mean, Q3, and max in the numeric summary and in our graphs).
+
+<br>
+---
+
+
+# Analyzing Paired Data
+
+It might be tempting to see the two separate groups (cross-fertilized plants and self-fertilized plants) and to analyze this like other problems with two groups. However, these groups aren't *independent*. What that means is each pot may be a bit different (e.g different soil moisture, acidity, etc.). Since pairs of plants shared a pot, we should make use of this information in our analysis.
+
+3. For problems with paired data, we will calculate the **difference** between our two groups for every single pot. Let's add a variable to our dataset called `diff` that contains the difference (`cross - self`) in heights for the plants in each pot.
+
+```{r}
+darwin <- mutate(darwin, diff = cross - self)
+summary(darwin)
+```
+
+<br>
+
+4. What we're really intrested in is how much taller (or shorter) cross-polinated plants will grow on average than self-polinated plants. When we look at the differences, we're able to see what happened when both plants were subjected to the same conditions. Our parameter can be written as $\mu_d$ (the population mean of the differences). What will our estimate of this value be?
+
+$\bar{x_d} = 2.617$ cm
+
+<br>
+
+5. Let's generate a bootstrap distribution of sample mean differences and create a histogram of those differences. Since `diff` is just a single variable, we will do our analysis just as if we were analyzing a problem where we wanted to estimate a single population mean. The only difference is that these values were obtained by calculating a difference in plant heights.
+
+```{r}
+set.seed(92820)
+darwin_boot <- darwin %>%
+  specify(formula = diff ~ NULL) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+visualize(darwin_boot)
+```
+
+<br>
+
+6. Once we have our bootstrap distribution, we could calculate a 90% confidence interval using any of the methods we've learned so far. Calculate a confidence interval, and write it out below.
+
+```{r}
+get_ci(darwin_boot, level = 0.9, type = "percentile") %>%
+  data.frame()
+```
+
+My 90% CI is: (0.57, 4.45)
+
+(Note: The interval above might be slightly different for you. They differed between my home and work computers.)
+
+<br>
+
+
+---
+
+# Interpreting CIs from Paired Data
+
+7. What does it mean if we get all positive values in this confidence interval? What about if we get all negative values?
+
+- Entirely positive CI: We think cross-fertilized plants are taller on average (higher pop. mean)
+- Entirely negative CI: We think cross-fertilized plants are shorter on average (or in other words self-fertilized are taller)
+- Interval contains + and - values: We aren't really confident which group is taller on average
+
+<br>
+
+8. Once we've calculated our interval (doing an analysis like we were estimating a single mean), we will interpret the interval like we interpret intervals comparing two means! Write an interpretation for the Darwin interval below.
+
+We are 90% confident that population mean height of cross-fertilized plants is higher than the population mean for self-fertilized plants by between 0.57 and 4.45 inches.
+
+<br>
+
+---
+
+# Want more practice? 
+
+There is a dataset on Moodle called **twins.csv**. The data is from a 1990 study where researchers compared left hippocampus volumes (in cm^3) for twins where one twin had schizophrenia (column `affected`) and the other twin did not (column `unaffected`). 
+
+Use the data to investigate whether or not there seems to be a difference in population mean left hippocampus volume for people with/without schizophrenia. 
+
+Create and interpret a 95% confidence interval. Then consider whether there might be limitations or further considerations one should make when trying to generalize these conclusions.
