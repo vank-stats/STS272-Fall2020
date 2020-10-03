@@ -1,0 +1,124 @@
+---
+title: "Activity 13 - Different Confidence Interval Methods"
+author: "STS272 (Dr. VanKrevelen)"
+date: 'Updated: 9/27/2020'
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE, warning = FALSE}
+library(ggplot2)
+library(infer)
+library(dplyr)
+```
+
+We've learned three different methods for calculating confidence intervals (percentile, SE, and theory-based). If you're wondering which one you should use, the answer is that it usually doesn't matter much. As we discussed in Notes 9, the three methods all basically...
+
+- are centered at or near your estimate
+- use your sample/bootstrap distribution to estimate a standard error
+- and use a theoretical/bootstrap distribution to account for your level of confidence
+
+Let's use the `diamonds` dataset from the `ggplot2` package to illustrate how confidence intervals work.
+
+1. Calculate the mean price of the diamonds. We will consider this the population mean. (Note: Normally we won't know this value, but it will help us illustrate how confidence intervals work)
+
+```{r}
+mean(diamonds$price)
+```
+
+In this example, $\mu = \$3,932.80$ 
+
+<br>
+
+
+2. I've included code below to take a sample of 50 diamonds and stored it in an object called `diamond_sample`. Calculate the sample mean of your sample and store it in `xbar_price`.
+
+```{r}
+set.seed(536)
+diamond_sample <- sample_n(diamonds, size = 50)
+xbar_price <- mean(diamond_sample$price)
+xbar_price
+```
+
+<br>
+
+
+3. If we wanted to make a confidence interval using the theory-based method, we could calculate it with this formula: $\bar{x} \pm t^*_{n-1} * \frac{s}{\sqrt{n}}$ or we can use the `t.test()` function. Let's use R to create a 50% confidence interval and a 90% confidence interval.
+
+```{r}
+t.test(diamond_sample$price, conf.level = .5)
+t.test(diamond_sample$price, conf.level = .9)
+```
+
+
+<br>
+
+4. Was the population mean (from question 1) inside your intervals?
+
+Around 50% of our 50% confidence intervals contained the population mean. All of our 90% confidence intervals contained the population mean, but we would expect that if we made say 100 of these, about 90% of them would contain it.
+
+<br>
+
+
+5. Let's try making the same two intervals (50% and 90%) using the SE method. We will need to create a bootstrap distribution.
+
+```{r}
+diamonds_boot <- diamond_sample %>%
+  specify(formula = price ~ NULL) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+get_confidence_interval(diamonds_boot, type = "se", level = 0.5, 
+                        point_estimate = xbar_price)
+get_confidence_interval(diamonds_boot, type = "se", level = 0.9, 
+                        point_estimate = xbar_price)
+
+```
+
+<br>
+
+
+6. Compare your intervals with this method to your intervals with the theory-based method. Do they have the same center? Are the endpoints similar? Explain why this is.
+
+They have the exact same center (our sample mean). The endpoints are similar but not exactly the same.
+
+Both methods start at our sample mean then add and subtract something.
+
+They use slightly different ways of estimating the standard error, so they get similar but slightly different widths.
+
+<br>
+
+
+7. Use the bootstrap distribution to generate the same two intervals using the percentile method. Do they have the same center as the other two? Are the endpoints similar? Explain what's going on.
+
+```{r}
+get_confidence_interval(diamonds_boot, type = "percentile", level = .5)
+get_confidence_interval(diamonds_boot, type = "percentile", level = .9)
+```
+
+< Put your answer here >
+
+<br>
+
+
+---
+
+Interpretations of CI with positive and negative endpoints.
+
+Let's say we have two samples (one of first year students and one of fourth year students). We want to make a 95% confidence interval for the population mean difference in hours per week at the gym and we get (-1.2, 3.1). For this interval we considered first year students to be group 1 and fourth year students to be group 2.
+
+I'll ask for interpretations or you can go to www.socrative.com and login to room VANKSTATS to share anonymously.
+
+We cannot be 95% confident that either group of students has a higher population mean hours per week at the gym. We are 95% confident the difference in population mean hours per week at the gym is anywhere from 1.2 hours higher for fourth year students to 3.1 hours higher for first year students.
+
+---
+
+Example 2: We're trying to determine the population mean temperature (in celcius) of Alaska in March. We come up with a 95% confidence interval of (-10, 7).
+
+We are 95% confident the population mean temperature in Alaska in March is between -10 degrees C and +7 degrees C.
