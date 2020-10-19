@@ -1,0 +1,179 @@
+---
+title: "Activity 16 - Hypothesis Tests for Means"
+author: "STS272 (Dr. VanKrevelen)"
+date: 'Updated: 10/18/2020'
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE, warning = FALSE}
+library(ggplot2)
+library(infer)
+library(dplyr)
+```
+
+
+### To use socrative go to www.socrative.com --> Login --> Student login --> Room name is VANKSTAT
+
+# Example 1 - Machine Temperature
+
+A machine at a factory is designed to pour metal at an average temperature of 2550°F. Four times a day, the company will take a random sample of 10 pieces produced at measure the temperature. If they think that the machine might not be operating at its target temperature, they will need to shut down the machine and recalibrate it. They will conduct a hypothesis test using $\alpha = 0.05$.
+
+1. Step 1 - Write out our hypotheses
+
+Write out the appropriate hypotheses for this problem. Define any parameters below.
+
+
+In words...
+
+$H_0:$ the machine is working at the target temperature
+
+$H_A:$ the machine is not working at the target temperature
+
+
+In symbols...
+
+$H_0: \mu = 2550$
+
+$H_A: \mu \neq 2550$
+
+$\mu$ = current population mean pouring temperature
+
+
+2. Step 2 - Gather and summarize data
+
+Below is code to read in the data. Generate a graph to view the data and then calculate an appropriate statistic to summarize the data for these hypotheses.
+
+```{r}
+factory <- data.frame(temps = c(2542, 2544, 2545, 2551, 2552, 
+                                2552, 2558, 2561, 2563, 2618))
+metaltemp_obsxbar <- factory %>%
+  specify(formula = temps ~ NULL) %>%
+  calculate(stat = "mean")
+metaltemp_obsxbar
+```
+```{r}
+ggplot(factory) +
+  geom_boxplot(aes(y = temps))
+```
+
+
+
+3. Step 3 - Compare the data to $H_0$
+
+Use the `infer` package to generate a null distribution. Visualize your p-value on the distribution and calculate the p-value. Write a sentence explaining what the p-value means in context.
+
+```{r}
+set.seed(45678)
+temps_nulldist <- factory %>%
+  specify(formula = temps ~ NULL) %>%
+  hypothesize(null = "point", mu = 2550) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+visualise(temps_nulldist) +
+  shade_p_value(obs_stat = metaltemp_obsxbar, direction = "both")
+```
+
+```{r}
+temps_nulldist %>%
+  get_p_value(obs_stat = metaltemp_obsxbar, direction= "both")
+```
+
+The p-value of 0.182 is telling me that in a hypothetical world where the null hypothesis is true and the machine is operating at a population mean pouring temperature of 2550*F, we would see a sample mean as far from 2550*F as the one we actually got about 18% of the time.
+
+4. Step 4 - Reach a conclusion
+
+Insufficient evidence to reject H0.
+
+**Conclusion:** Our p-value of 0.182 is above the significance level of 0.05. This means the data collected is compatible with the null hypothesis. This means we fail to reject $H_0$ and we have insufficient evidence the machine is not operating at its target population mean pouring temperature.
+
+(Note: We reject $H_0$ when our p-value is < $\alpha$. If our p-value > $\alpha$ we fail to reject $H_0$.)
+
+
+5. Could they say that they have sufficient evidence the machine is operating at its target temperature? Why or why not?
+
+It's worth considering what we mean by *sufficient evidence*.
+
+It's going to be basically impossible for us to say $\mu$ is a specific number like our null hypothesis says. What happens when we have a "big" p-value, is that we're saying our data is compatible with our null hypothesis, but it's almost guaranteed to be equally compatible with plenty of other hypotheses.
+
+
+---
+
+Suppose that 100 people conducted the exact same experiment about ESP. In other words, they each took a sample and had the believers and skeptics guess what was on the 50 cards. Answer the following two questions:
+
+1) Do you think any of these people would end up with p-values under α=0.10? Why or why not?
+
+If there really is nothing going on, about 10% of these people will end up with p-values below 0.1.
+
+Each of these 10 people may say "I have sufficient evidence of a difference in ESP ability between believers and skeptics".
+
+It's important to remember that weird things can happen, and we can make false positives and false negatives in our conclusions. This doesn't mean we shouldn't still make conclusions from our experiments, but it's also worth having someone else verify your results.
+
+
+
+
+
+2) What should we take away from the answer to this?
+
+The **replication crisis** is based on the idea that a lot of these results might be getting published and then other people can't reprodcue them.
+
+
+---
+
+
+# Example 2 - Fidget spinners
+
+We previously looked at some data where people used fidget spinners and researchers measured their attention and memory. Suppose we want to compare the attention score between people who are near a fidget spinner (but not the one using it) and people with no spinner present. We suspect that those without a spinner present might have a higher memory score. (Use $\alpha = 0.05$ for your significance level)
+
+
+1. Step 1 - Write out our hypotheses
+
+Write out the appropriate hypotheses for this problem. Define any parameters below.
+
+$H_0:$
+
+$H_A:$
+
+
+
+2. Step 2 - Gather and summarize data
+
+Below is code to read in the data. Generate a graph to view the data and then calculate an appropriate statistic to summarize the data for these hypotheses.
+
+```{r}
+fidget <- data.frame(spinner = c(rep("none", 32), rep("nearby", 33)),
+                     attention = c(4.67, 4.33, 4.67, 2.33, 2.67, 4.33, 2.33, 3.67, 
+                                   3.00, 2.33, 3.67, 4.00, 3.67, 2.67, 3.33, 5.00, 
+                                   2.67, 2.00, 4.67, 4.00, 3.33, 3.33, 2.33, 3.67,
+                                   3.33, 4.33, 2.33, 2.33, 3.00, 3.00, 1.33, 2.33,
+                                   2.00, 2.33, 2.67, 4.00, 2.33, 2.33, 3.67, 3.00, 
+                                   3.33, 3.67, 4.33, 2.67, 2.33, 2.33, 3.33, 3.33, 
+                                   4.00, 2.00, 2.00, 3.67, 2.33, 2.33, 3.67, 4.00, 
+                                   3.00, 2.33, 4.33, 1.33, 3.67, 4.33, 3.33, 2.33, 
+                                   2.33))
+```
+
+
+
+3. Step 3 - Compare the data to H0
+
+Use the `infer` package to generate a null distribution. Visualize your p-value on the distribution and calculate the p-value. Write a sentence explaining what the p-value means in context.
+
+```{r}
+
+```
+
+
+4. Step 4 - Reach a conclusion
+
+**Conclusion:**
+
+
+
+5. Does this mean that fidget spinners aren't distracting for people nearby? If not, what does it mean?

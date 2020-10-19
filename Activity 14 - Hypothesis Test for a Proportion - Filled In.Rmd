@@ -1,0 +1,111 @@
+---
+title: "Activity 14 - Hypothesis Test for a Proportion"
+author: "STS272 (Dr. VanKrevelen)"
+date: 'Updated: 10/12/2020'
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning = FALSE, message = FALSE}
+library(ggplot2)
+library(infer)
+library(dplyr)
+```
+
+The best way to get more comfortable with conducting hypothesis tests is to practice. 
+
+Let's suppose that we're interested in studying the concept of home field advantage in Major League Baseball this season. If there's no such thing as home field advantage, the home team will win just as often as the away team (half the time). If there *is* an advantage to the home team, they will win over half the time. To carry out this test, I will use a significance level of $\alpha = 0.10$.
+
+1. Step 1 - Write out our null and alternative hypotheses below. Define $p$ in this specific example.
+
+$H_0: p = 0.5$
+
+$H_A: p > 0.5$
+
+$p$ = population proportion of games won by the home team
+
+2. Step 2 - I gathered data from two random dates, which you can read into R below. Summarize this data in context of this problem.
+
+```{r}
+mlbgames <- data.frame(date = c(rep("8/21/20", 14), rep("9/7/20", 11)),
+                       winner = c("H", "A", "A", "A", "H",
+                                  "H", "H", "H", "H", "H",
+                                  "H", "A", "A", "A",
+                                  "H", "A", "A", "A", "H",
+                                  "H", "H", "H", "H", "H",
+                                  "H"))
+obs_phat <- mlbgames %>%
+  specify(formula = winner ~ NULL, success = "H") %>%
+  calculate(stat = "prop")
+obs_phat
+```
+
+$\hat{p} = 0.64$
+
+3. Step 3 - Use the `infer` package to create a null distribution and shade in your p-value on the picture. Then calculate the p-value and write a sentence about what the p-value means for this specific example. (Note: You aren't giving a formal conclusion yet.)
+
+```{r}
+set.seed(101420)
+mlb_nulldist <- mlbgames %>%
+  specify(formula = winner ~ NULL, success = "H") %>%
+  hypothesize(null = "point", p = 0.5) %>%
+  generate(reps = 1000, type = "simulate") %>%
+  calculate(stat = "prop")
+
+visualize(mlb_nulldist) +
+  shade_p_value(obs_stat = obs_phat, direction = "right")
+
+mlb_nulldist %>%
+  get_p_value(obs_stat = obs_phat, direction = "right")
+```
+
+We made a graph of our null distribution. It's centered at 0.5 (because in a world where p = 0.5, most of our sample proportions will also be around 0.5).
+
+The graph looks like a normal / bell-shaped distribution. This means we could use theory-based methods and feel OK about it.
+
+We saw sample proportions as small as around 0.2 and as big as around 0.8. This is telling me that in a sample of this size, a lot can happen even if there's no homefield advantage.
+
+
+In general, the p-va;ue is the probability of data as extreme as what we saw IF the null hypothesis is true.
+
+For our example, there is a probability of around 0.11 (or an 11% chance) that we would see the home teams win 64% or more of their games in a 25 game sample **IF there was no home field advantage**.
+
+
+4. Step 4 - Write a formal conclusion based on your p-value.
+
+Since our p-value of 0.11 is above the significance level of 0.10, our data was consistent with the null hypothesis. Because of this we do not have reject our null hypothesis and have insufficient evidence that a home field advantage exists in Major League Baseball this year (i.e. insufficient evidence home teams win more than half of the games).
+
+
+
+
+5. Write a couple sentences about why we reached this conclusion. Do you think it's possible we're "wrong"? What could we do to feel more confident in our answer?
+
+- Why did we reach this conclusion?
+
+> Maybe there really isn't a home field advantage (e.g. this year had no fans in the stands). Our sample size is pretty small, so even if there was a home field advantage, it might be hard to "detect it" with only 25 games. We saw in our null distribution, that a lot of different things can happen in only 25 games.
+
+
+- Is it possible we're "wrong"?
+
+> It's possible in the sense that there might really be a homefield advantage and we were unable to find it. When we are unable to find an "effect" but one really exists, this is known as a **false negative**. (A **false positive** is when we find sufficient evidence of something going on even though the null hypothesis was actually correct.)
+
+
+- What could we do to feel more confident in our answer?
+
+> I could have taken a larger sample of more games.
+
+
+6. Want extra practice? Try to repeat this process for NBA games this season (before the bubble). Below is data collected from two random dates this NBA season.
+
+```{r}
+nbagames <- data.frame(date = c(rep("1/11/20", 7), rep("2/23/20", 7)),
+                       winner = c("H", "H", "A", "A", "H", "H", "H",
+                                  "H", "H", "A", "H", "H", "H", "H"))
+```
+
